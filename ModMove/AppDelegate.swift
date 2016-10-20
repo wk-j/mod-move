@@ -2,7 +2,7 @@ import Cocoa
 
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(aNotification: NSNotification) {
+    func applicationDidFinishLaunching(_ aNotification: Notification) {
         AccessibilityHelper.askForAccessibilityIfNeeded()
 
         if !LoginController.opensAtLogin() {

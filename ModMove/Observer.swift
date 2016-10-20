@@ -2,30 +2,32 @@ import AppKit
 import Foundation
 
 enum FlagState {
-    case Resize
-    case Drag
-    case Ignore
+    case resize
+    case drag
+    case ignore
 }
 
 final class Observer {
-    private var monitor: AnyObject?
+    fileprivate var monitor: AnyObject?
 
-    func startObserving(state: FlagState -> Void) {
-        self.monitor = NSEvent.addGlobalMonitorForEventsMatchingMask(.FlagsChangedMask) { event in
+    func startObserving(_ state: @escaping (FlagState) -> Void) {
+        self.monitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { event in
             state(self.stateForFlags(event.modifierFlags))
-        }
+        } as AnyObject?
     }
 
-    private func stateForFlags(flags: NSEventModifierFlags) -> FlagState {
-        let hasMain = flags.contains(.ControlKeyMask) && flags.contains(.AlternateKeyMask)
-        let hasShift = flags.contains(.ShiftKeyMask)
+    fileprivate func stateForFlags(_ flags: NSEventModifierFlags) -> FlagState {
+        // let hasMain = flags.contains(.control) && flags.contains(.AlternateKeyMask)
+        let hasMain = flags.contains(.control) // && flags.contains(.)
+
+        let hasShift = flags.contains(.shift)
 
         if hasMain && hasShift {
-            return .Resize
+            return .resize
         } else if hasMain {
-            return .Drag
+            return .drag
         } else {
-            return .Ignore
+            return .ignore
         }
     }
 

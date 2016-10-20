@@ -22,16 +22,16 @@ final class AccessibilityElement {
         }
     }
 
-    private let elementRef: AXUIElementRef
+    fileprivate let elementRef: AXUIElement
 
-    init(elementRef: AXUIElementRef) {
+    init(elementRef: AXUIElement) {
         self.elementRef = elementRef
     }
 
-    func elementAtPoint(point: CGPoint) -> Self? {
-        var ref: AXUIElementRef?
+    func elementAtPoint(_ point: CGPoint) -> Self? {
+        var ref: AXUIElement?
         AXUIElementCopyElementAtPosition(self.elementRef, Float(point.x), Float(point.y), &ref)
-        return ref.map(self.dynamicType.init)
+        return ref.map(type(of: self).init)
     }
 
     func window() -> Self? {
@@ -56,70 +56,71 @@ final class AccessibilityElement {
     }
 
     func pid() -> pid_t? {
-        let pointer = UnsafeMutablePointer<pid_t>.alloc(1)
+        let pointer = UnsafeMutablePointer<pid_t>.allocate(capacity: 1)
         let error = AXUIElementGetPid(self.elementRef, pointer)
-        return error == .Success ? pointer.memory : nil
+        return error == .success ? pointer.pointee : nil
     }
 
     func bringToFront() {
         if let isMainWindow = self.rawValueForAttribute(NSAccessibilityMainAttribute) as? Bool
-            where isMainWindow
+            , isMainWindow
         {
             return
         }
 
-        AXUIElementSetAttributeValue(self.elementRef, NSAccessibilityMainAttribute, true)
+        AXUIElementSetAttributeValue(self.elementRef, NSAccessibilityMainAttribute as CFString, true as CFTypeRef)
     }
 
     // MARK: - Private functions
 
-    static private func createSystemWideElement() -> Self {
-        return self.init(elementRef: AXUIElementCreateSystemWide().takeUnretainedValue())
+    static fileprivate func createSystemWideElement() -> Self {
+        return self.init(elementRef: AXUIElementCreateSystemWide())
+        // return self.init(elementRef: AXUIElementCreateSystemWide().takeUnretainedValue())
     }
 
-    private func getPosition() -> CGPoint? {
+    fileprivate func getPosition() -> CGPoint? {
         return self.valueForAttribute(kAXPositionAttribute)
     }
 
-    private func setPosition(position: CGPoint) {
-        if let value = AXValue.fromValue(position, type: .CGPoint) {
-            AXUIElementSetAttributeValue(self.elementRef, kAXPositionAttribute, value)
+    fileprivate func setPosition(_ position: CGPoint) {
+        if let value = AXValue.fromValue(position, type: .cgPoint) {
+            AXUIElementSetAttributeValue(self.elementRef, kAXPositionAttribute as CFString, value)
         }
     }
 
-    private func getSize() -> CGSize? {
+    fileprivate func getSize() -> CGSize? {
         return self.valueForAttribute(kAXSizeAttribute)
     }
 
-    private func setSize(size: CGSize) {
-        if let value = AXValue.fromValue(size, type: .CGSize) {
-            AXUIElementSetAttributeValue(self.elementRef, kAXSizeAttribute, value)
+    fileprivate func setSize(_ size: CGSize) {
+        if let value = AXValue.fromValue(size, type: .cgSize) {
+            AXUIElementSetAttributeValue(self.elementRef, kAXSizeAttribute as CFString, value)
         }
     }
 
-    private func rawValueForAttribute(attribute: String) -> AnyObject? {
+    fileprivate func rawValueForAttribute(_ attribute: String) -> AnyObject? {
         var rawValue: AnyObject?
-        let error = AXUIElementCopyAttributeValue(self.elementRef, attribute, &rawValue)
-        return error == .Success ? rawValue : nil
+        let error = AXUIElementCopyAttributeValue(self.elementRef, attribute as CFString, &rawValue)
+        return error == .success ? rawValue : nil
     }
 
-    private func valueForAttribute(attribute: String) -> Self? {
+    fileprivate func valueForAttribute(_ attribute: String) -> Self? {
         if let rawValue = self.rawValueForAttribute(attribute)
-            where CFGetTypeID(rawValue) == AXUIElementGetTypeID()
+            , CFGetTypeID(rawValue) == AXUIElementGetTypeID()
         {
-            return self.dynamicType.init(elementRef: rawValue as! AXUIElementRef)
+            return type(of: self).init(elementRef: rawValue as! AXUIElement)
         }
 
         return nil
     }
 
-    private func valueForAttribute(attribute: String) -> String? {
+    fileprivate func valueForAttribute(_ attribute: String) -> String? {
         return self.rawValueForAttribute(attribute) as? String
     }
 
-    private func valueForAttribute<T>(attribute: String) -> T? {
+    fileprivate func valueForAttribute<T>(_ attribute: String) -> T? {
         if let rawValue = self.rawValueForAttribute(attribute)
-            where CFGetTypeID(rawValue) == AXValueGetTypeID()
+            , CFGetTypeID(rawValue) == AXValueGetTypeID()
         {
             return (rawValue as! AXValue).toValue()
         }

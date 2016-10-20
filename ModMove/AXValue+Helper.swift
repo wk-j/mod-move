@@ -2,14 +2,17 @@ import Foundation
 
 extension AXValue {
     func toValue<T>() -> T? {
-        let pointer = UnsafeMutablePointer<T>.alloc(1)
+        let pointer = UnsafeMutablePointer<T>.allocate(capacity: 1)
         let success = AXValueGetValue(self, AXValueGetType(self), pointer)
-        return success ? pointer.memory : nil
+        return success ? pointer.pointee : nil
     }
 
-    static func fromValue<T>(value: T, type: AXValueType) -> AXValue? {
-        let pointer = UnsafeMutablePointer<T>.alloc(1)
-        pointer.memory = value
-        return AXValueCreate(type, pointer)?.takeUnretainedValue()
+    static func fromValue<T>(_ value: T, type: AXValueType) -> AXValue? {
+        let pointer = UnsafeMutablePointer<T>.allocate(capacity: 1)
+        pointer.pointee = value
+        return AXValueCreate(type, pointer)
+        //return AXValueCreate(type, pointer)?.takeUnretainedValue()
+        
+        
     }
 }
